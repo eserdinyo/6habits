@@ -3,10 +3,23 @@
     <router-view/>
   </div>
 </template>
+<script>
+export default {
+  data() {
+    return {
+      backgroundColor: "",
+    }
+  },
+
+  created() {
+      this.backgroundColor = localStorage.getItem("background");
+      document.body.style.backgroundColor = this.backgroundColor;
+  }
+}
+</script>
 
 <style lang="scss">
 body {
-  background-color: #f1c40f;
   font-family: 'Roboto', sans-serif;
 }
 </style>
