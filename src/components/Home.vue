@@ -1,59 +1,48 @@
-<template>
-  <div class="main">
-    <h1 class="title">6 HABITS</h1>
-    <div :class="{ overlay: showSetting }"></div>
-    <div class="container wrapper">
-      <div
-        v-for="(habit,index) in habits"
-        :key="habit.id"
-        class="habit col-md-4"
-        :class="{ done: habit.status }"
-        @click="done('http://soundbible.com/mp3/Elevator Ding-SoundBible.com-685385892.mp3',index)"
-      >
-        <i :class="['habit__icon fas fa-' + habit.icon]"></i>
-        <p class="habit__title">{{ habit.name}}</p>
-        <div class="habit__count">
-          <p>{{habit.count}}</p>
-          <i class="fas fa-star"></i>
-        </div>
-      </div>
-
-      <div class="setting" :class="{ showSetting: showSetting }">
-        <div @click="closeSetting" class="close-btn">
-          <i class="fas fa-times"></i>
-        </div>
-
-        <div class="colors-wrapper">
-          <h3>Background Color</h3>
-
-          <div class="colors">
-            <div
-              class="color"
-              v-for="color in colors"
-              @click="saveBackgroundColor(color)"
-              :style="{backgroundColor: color}"
-              :key="color.id"
-            ></div>
-          </div>
-        </div>
-      </div>
-      <div @click="toggleSetting" class="setting-btn">
-        <i class="fas fa-cog"></i>
-      </div>
-    </div>
-  </div>
+<template lang='pug'>
+ .main(@click='closeEdit')
+  h1.title 6 HABITS
+  div(:class='{ overlay: showOverlay }')
+  .container.wrapper
+    .habit.col-md-4(v-for='(habit,index) in habits', 
+      :key='habit.id', :class='{ done: habit.status, onDeletingHabit: deletingHabit }', 
+      @click.stop="done('http://soundbible.com/mp3/Elevator Ding-SoundBible.com-685385892.mp3',index)")
+      i(:class="['habit__icon fas fa-' + habit.icon]")
+      p.habit__title {{ habit.name}}
+      .habit__count
+        p {{habit.count}}
+        i.fas.fa-star
+      a.habit__delete.fas.fa-times(@click='deleteHabit', v-if='deletingHabit')
+    .habit.habit__add.col-md-4(@click.stop="openModal",v-if='deletingHabit')
+      i(:class="['habit__icon fas fa-plus']")
+      p.habit__title Add Habit
+    Setting
+    .setting-btn(@click='toggleSetting')
+      i.fas.fa-cog
+    .edit-btn(@click.stop='activeEdit')
+      i.fas.fa-pen
+    Modal
+  
 </template>
 
 <script>
+import Setting from "./Setting";
+import Modal from './AddHabitModal';
+import { EventBus } from "../main";
+
 export default {
   name: "Home",
+  components: {
+    Setting,
+    Modal
+  },
   data() {
     return {
       interval: false,
       count: 0,
+      deletingHabit: false,
       showSetting: false,
       HABITS_KEY: "habits",
-      BACKGROUND_KEY: "background",
+      showOverlay: false,
       habits: "",
       habitsDummy: [
         {
@@ -85,49 +74,35 @@ export default {
           icon: "book",
           count: 1,
           status: false
-        },
-        {
-          name: "10 dl Egzersiz Yap",
-          icon: "dumbbell",
-          count: 4,
-          status: false
         }
-      ],
-      colors: [
-        "#4834d4",
-        "#F97F51",
-        "#be2edd",
-        "#eb4d4b",
-        "#f9ca24",
-        "#6ab04c",
-        "#0984e3",
-        "#2d3436",
-        "#6D214F"
       ]
     };
   },
   methods: {
+    deleteHabit() {
+      console.log("delete...");
+    },
+    closeEdit() {
+      this.deletingHabit = false;
+    },
     done(sound, habit) {
-      if (!this.habits[habit].status) {
-        this.habits[habit].status = true;
-        this.habits[habit].count += 1;
+      if (!this.deletingHabit) {
+        if (!this.habits[habit].status) {
+          this.habits[habit].status = true;
+          this.habits[habit].count += 1;
 
-        var audio = new Audio(sound);
-        audio.play();
+          var audio = new Audio(sound);
+          audio.play();
+        }
       }
     },
     toggleSetting() {
-      this.showSetting = !this.showSetting;
+      EventBus.$emit("openSetting", 2);
+      this.showOverlay = true;
     },
-    closeSetting() {
-      this.showSetting = false;
-    },
-    saveBackgroundColor(color) {
-      localStorage.setItem(this.BACKGROUND_KEY, color);
-      document.body.style.backgroundColor = color;
-    },
+
     saveToStorage() {
-      localStorage.setItem(this.HABITS_KEY, JSON.stringify(this.habits));
+      localStorage.setItem(this.HABITS_KEY, JSON.stringify(this.habitsDummy));
     },
     fetchFromStorage() {
       this.habits = JSON.parse(localStorage.getItem(this.HABITS_KEY));
@@ -135,15 +110,23 @@ export default {
         habit.id = index;
         habit.status = false;
       });
-    }
+    },
+    activeEdit() {
+      this.deletingHabit = true;
+      console.log("edit...");
+    },
+    openModal() {}
   },
   created() {
     this.fetchFromStorage();
+    EventBus.$on("closeOverlay", payload => {
+      this.showOverlay = false;
+    });
   },
   watch: {
     habits: {
       handler(habits) {
-       this.saveToStorage(this.habits);
+        this.saveToStorage(this.habits);
       },
       deep: true
     }
@@ -189,6 +172,7 @@ export default {
   align-items: center;
   position: relative;
   cursor: pointer;
+  transform-origin: top right;
 
   &__icon {
     font-size: 4rem;
@@ -223,8 +207,21 @@ export default {
     font-size: 10px;
   }
 
-  &:hover {
-    //border-color: #ecf0f1;
+  &__delete {
+    position: absolute;
+    right: 0;
+    top: -5%;
+    color: #fff;
+    font-size: 20px;
+  }
+
+  &__add {
+    background-color: #fff;
+    border-color: #fff;
+
+    .habit__icon {
+      color: #6ab04c;
+    }
   }
 }
 
@@ -244,23 +241,6 @@ export default {
   }
 }
 
-.setting {
-  height: 100vh;
-  background: #22a6b3;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  opacity: 0;
-  transition: all 0.2s;
-  z-index: 9999;
-}
-
-.showSetting {
-  width: 40vw;
-  opacity: 1;
-}
-
 .setting-btn {
   position: absolute;
   left: 20px;
@@ -274,13 +254,14 @@ export default {
   }
 }
 
-.close-btn {
+.edit-btn {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  color: #fff;
-  font-size: 20px;
+  right: 20px;
+  bottom: 20px;
+  transition: all 0.2s;
   cursor: pointer;
+  z-index: 9;
+  color: #fff;
 }
 
 .overlay {
@@ -293,31 +274,16 @@ export default {
   background-color: #191919bb;
 }
 
-.colors-wrapper {
-  position: absolute;
-  top: 100px;
-  left: 100px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  h3 {
-    text-align: center;
-    color: #fff;
-  }
+.onDeletingHabit {
+  animation: jiggle 0.2s infinite;
 }
-.colors {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  grid-gap: 40px;
 
-  .color {
-    height: 20px;
-    width: 20px;
-    background: yellow;
-    border-radius: 50%;
-    cursor: pointer;
+@keyframes jiggle {
+  0% {
+    transform: rotate(-1deg);
+  }
+  50% {
+    transform: rotate(1deg);
   }
 }
 </style>
