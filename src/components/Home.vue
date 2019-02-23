@@ -11,22 +11,23 @@
       .habit__count
         p {{habit.count}}
         i.fas.fa-star
-      a.habit__delete.fas.fa-times(@click='deleteHabit', v-if='deletingHabit')
-    .habit.habit__add.col-md-4(@click.stop="openModal",v-if='deletingHabit')
+      a.habit__delete.fas.fa-times(@click='removeHabit(habit)', v-if='deletingHabit')
+    .habit.habit__add.col-md-4(@click.stop="openModal",
+        v-if='deletingHabit && habits.length < 6')
       i(:class="['habit__icon fas fa-plus']")
       p.habit__title Add Habit
     Setting
-    .setting-btn(@click='toggleSetting')
+    .setting-btn(@click.stop='toggleSetting')
       i.fas.fa-cog
     .edit-btn(@click.stop='activeEdit')
       i.fas.fa-pen
-    Modal
+    Modal(v-if='isModalOpen')
   
 </template>
 
 <script>
 import Setting from "./Setting";
-import Modal from './AddHabitModal';
+import Modal from "./AddHabitModal";
 import { EventBus } from "../main";
 
 export default {
@@ -40,10 +41,12 @@ export default {
       interval: false,
       count: 0,
       deletingHabit: false,
+      isModalOpen: false,
       showSetting: false,
       HABITS_KEY: "habits",
       showOverlay: false,
       habits: "",
+      imgUrl: "https://source.unsplash.com/collection/1977131/1920x1080/daily",
       habitsDummy: [
         {
           name: "Gitar Çalış",
@@ -79,11 +82,14 @@ export default {
     };
   },
   methods: {
-    deleteHabit() {
-      console.log("delete...");
+    removeHabit(habit) {
+      this.habits.splice(this.habits.indexOf(habit), 1);
     },
     closeEdit() {
-      this.deletingHabit = false;
+      if (!this.isModalOpen) {
+        this.deletingHabit = false;
+        EventBus.$emit("openSetting", 0);
+      }
     },
     done(sound, habit) {
       if (!this.deletingHabit) {
@@ -97,36 +103,65 @@ export default {
       }
     },
     toggleSetting() {
-      EventBus.$emit("openSetting", 2);
+      EventBus.$emit("openSetting", 1);
       this.showOverlay = true;
     },
 
-    saveToStorage() {
-      localStorage.setItem(this.HABITS_KEY, JSON.stringify(this.habitsDummy));
+    saveToStorage(habits) {
+      localStorage.setItem(this.HABITS_KEY, JSON.stringify(habits));
     },
     fetchFromStorage() {
       this.habits = JSON.parse(localStorage.getItem(this.HABITS_KEY));
       this.habits.forEach((habit, index) => {
-        habit.id = index;
-        habit.status = false;
+        // habit.status = false;
       });
     },
     activeEdit() {
       this.deletingHabit = true;
       console.log("edit...");
     },
-    openModal() {}
+    openModal() {
+      this.isModalOpen = true;
+      this.showOverlay = true;
+    },
+    setBackground() {
+      let body = document.body.style;
+
+      body.backgroundImage =
+        "linear-gradient(to top,rgba(0,0,0, .8) ,rgba(0,0,0, .8)), url(" +
+        this.imgUrl +
+        ") ";
+
+      body.backgroundPosition = "left";
+      body.backgroundSize = "cover";
+    }
   },
   created() {
     this.fetchFromStorage();
+    this.setBackground();
     EventBus.$on("closeOverlay", payload => {
       this.showOverlay = false;
+    });
+
+    EventBus.$on("closeModal", payload => {
+      this.showOverlay = false;
+      this.isModalOpen = false;
+    });
+
+    EventBus.$on("addHabit", habit => {
+      this.habits.push({
+        name: habit.habitName,
+        icon: habit.icon,
+        count: 0,
+        status: false
+      });
     });
   },
   watch: {
     habits: {
+      // Works when habits array change
       handler(habits) {
-        this.saveToStorage(this.habits);
+        this.saveToStorage(habits);
       },
       deep: true
     }
@@ -135,6 +170,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.main {
+  height: 95vh;
+}
 .container {
   max-width: 1200px;
   margin-left: auto;
@@ -156,15 +194,15 @@ export default {
   font-family: Arial, Helvetica, sans-serif;
   text-align: center;
   font-size: 3rem;
+  margin-bottom: 40px;
   text-transform: uppercase;
-  margin-bottom: 5%;
 }
 
 .habit {
   width: 150px;
   height: 150px;
   margin-bottom: 7%;
-  border: 7px solid #191919;
+  border: 7px solid #ecf0f1;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -196,6 +234,7 @@ export default {
     top: 70%;
     display: flex;
     align-items: center;
+    color: #fff;
 
     & .fas {
       margin-left: 3px;
@@ -227,17 +266,20 @@ export default {
 
 .done {
   background-color: #ecf0f1;
-  color: #191919;
-  border-color: #ecf0f1;
+  color: #333;
 
   & .habit__icon {
-    color: #191919;
+    color: #333;
   }
 
   & .habit__count {
     & .fas {
-      color: #191919;
+      color: #333;
     }
+  }
+
+  & .habit__count p {
+    color: #333;
   }
 }
 
@@ -248,6 +290,7 @@ export default {
   transition: all 0.2s;
   cursor: pointer;
   z-index: 9;
+  color: #ddd;
 
   &:hover {
     transform: rotate(30deg);
@@ -261,7 +304,7 @@ export default {
   transition: all 0.2s;
   cursor: pointer;
   z-index: 9;
-  color: #fff;
+  color: #ddd;
 }
 
 .overlay {

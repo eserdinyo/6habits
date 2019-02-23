@@ -1,22 +1,27 @@
 <template lang='pug'>
     .Modal
-      .Modal__close.fas.fa-times
+      .Modal__close.fas.fa-times(@click.stop='closeModal')
       .Modal__title Add Habit
-      input.Modal__habit-name(v-model='habitName', placeholder='Habit name').Modal__name
+      input.Modal__habit-name(v-model='habit.habitName', placeholder='Habit name').Modal__name
       .Modal__icons
         a(v-for='icon in icons', 
           :class='{selectedIcon:icon == iconName}',
           @click='selectIcon(icon)')
            i(:class="['fas fa-' + icon]")
-      a.Modal__save Save
+      a.Modal__save(@click='addHabit') Save
 </template>
 
 <script>
+import { EventBus } from "../main";
+
 export default {
   data() {
     return {
-      habitName: "",
-      iconName: '',
+      habit: {
+        habitName: "",
+        icon: ""
+      },
+      iconName: "",
       selectedIcon: true,
       icons: [
         "music",
@@ -49,6 +54,18 @@ export default {
   methods: {
     selectIcon(iconName) {
       this.iconName = iconName;
+      this.habit.icon = iconName;
+    },
+    addHabit() {
+      let value = this.habit.habitName.trim() && this.habit.icon;
+      if (!value) return;
+      EventBus.$emit("addHabit", this.habit);
+      this.habit.habitName = "";
+      this.habit.icon = "";
+      EventBus.$emit("closeModal", 1);
+    },
+    closeModal() {
+      EventBus.$emit("closeModal", 1);
     }
   }
 };
@@ -63,6 +80,7 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  z-index: 99;
 
   &__title {
     font-size: 20px;

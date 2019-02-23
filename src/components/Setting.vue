@@ -6,7 +6,7 @@
         h3 Background Color
         .colors
             .color(v-for='color in colors', 
-                    @click='saveBackgroundColor(color)', 
+                    @click.stop='saveBackgroundColor(color)', 
                     :style='{backgroundColor: color}', 
                     :key='color.id')
 </template>
@@ -44,7 +44,7 @@ export default {
   },
   created() {
     EventBus.$on("openSetting", payload => {
-      this.showSetting = true;
+      payload == 1 ? this.showSetting = true : this.closeSetting();
     });
   }
 };
@@ -64,7 +64,7 @@ export default {
 }
 
 .showSetting {
-  width: 30vw;
+  width: 20vw;
   display: unset;
 }
 
@@ -78,12 +78,11 @@ export default {
 }
 
 .colors-wrapper {
-  position: absolute;
-  top: 100px;
-  left: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin: 0 auto;
+  margin-top: 40px;
 
   h3 {
     text-align: center;
