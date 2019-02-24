@@ -103,8 +103,8 @@ export default {
       }
     },
     toggleSetting() {
-      EventBus.$emit("openSetting", 1);
-      this.showOverlay = true;
+      /*  EventBus.$emit("openSetting", 1);
+      this.showOverlay = true; */
     },
 
     saveToStorage(habits) {
@@ -128,17 +128,37 @@ export default {
       let body = document.body.style;
 
       body.backgroundImage =
-        "linear-gradient(to top,rgba(0,0,0, .8) ,rgba(0,0,0, .8)), url(" +
+        "linear-gradient(to bottom,rgba(0,0,0, .8) ,rgba(0,0,0, .7)), url(" +
         this.imgUrl +
         ") ";
 
       body.backgroundPosition = "left";
       body.backgroundSize = "cover";
+    },
+    getTime() {
+        const time = new Date();
+        const getHour = time.getHours();
+        const getMin = time.getMinutes();
+        const getSec = time.getSeconds();
+
+        if (getHour == 14) {
+          this.habits = JSON.parse(localStorage.getItem(this.HABITS_KEY));
+          this.habits.forEach((habit, index) => {
+            // habit.status = false;
+             if (habit.status == false) {
+            habit.count = 0;
+          }
+          });
+        }
+
+        console.log(`${getHour}:${getMin}:${getSec}`);
     }
   },
   created() {
     this.fetchFromStorage();
     this.setBackground();
+    this.getTime();
+
     EventBus.$on("closeOverlay", payload => {
       this.showOverlay = false;
     });
