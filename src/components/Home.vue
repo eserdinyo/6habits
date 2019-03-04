@@ -3,8 +3,8 @@
   h1.title 6 HABITS
   div(:class='{ overlay: showOverlay }')
   .container.wrapper
-    .habit.col-md-4(v-for='(habit,index) in habits', 
-      :key='habit.id', :class='{ done: habit.status, onDeletingHabit: deletingHabit }', 
+    .habit.col-md-4(v-for='(habit,index) in habits',
+      :key='habit.id', :class='{ done: habit.status, onDeletingHabit: deletingHabit }',
       @click.stop="done('http://soundbible.com/mp3/Elevator Ding-SoundBible.com-685385892.mp3',index)")
       i(:class="['habit__icon fas fa-' + habit.icon]")
       p.habit__title {{ habit.name}}
@@ -22,7 +22,7 @@
     .edit-btn(@click.stop='activeEdit')
       i.fas.fa-pen
     Modal(v-if='isModalOpen')
-  
+
 </template>
 
 <script>
@@ -45,7 +45,7 @@ export default {
       showSetting: false,
       HABITS_KEY: "habits",
       showOverlay: false,
-      habits: "",
+      habits: [],
       imgUrl: "https://source.unsplash.com/collection/1977131/1920x1080/daily",
       habitsDummy: [
         {
@@ -111,14 +111,15 @@ export default {
       localStorage.setItem(this.HABITS_KEY, JSON.stringify(habits));
     },
     fetchFromStorage() {
-      this.habits = JSON.parse(localStorage.getItem(this.HABITS_KEY));
-      this.habits.forEach((habit, index) => {
-        // habit.status = false;
-      });
+      if (JSON.parse(localStorage.getItem(this.HABITS_KEY))) {
+        this.habits = JSON.parse(localStorage.getItem(this.HABITS_KEY));
+        this.habits.forEach((habit, index) => {
+          // habit.status = false;
+        });
+      }
     },
     activeEdit() {
       this.deletingHabit = true;
-      console.log("edit...");
     },
     openModal() {
       this.isModalOpen = true;
@@ -136,28 +137,40 @@ export default {
       body.backgroundSize = "cover";
     },
     getTime() {
-        const time = new Date();
-        const getHour = time.getHours();
-        const getMin = time.getMinutes();
-        const getSec = time.getSeconds();
+      const time = new Date();
+      const getHour = time.getHours();
+      const getMin = time.getMinutes();
+      const getSec = time.getSeconds();
 
-        if (getHour == 14) {
+      if (getHour == 14) {
+        if (JSON.parse(localStorage.getItem(this.HABITS_KEY))) {
           this.habits = JSON.parse(localStorage.getItem(this.HABITS_KEY));
-          this.habits.forEach((habit, index) => {
-            // habit.status = false;
-             if (habit.status == false) {
+        }
+        this.habits.forEach((habit, index) => {
+          if (habit.status == false) {
             habit.count = 0;
           }
-          });
-        }
-
-        console.log(`${getHour}:${getMin}:${getSec}`);
+        });
+      }
+    },
+    hasOneDayPassed() {
+      const date = new Date().toLocaleDateString();
+      if (localStorage.getItem("date") == date) return false;
+      else {
+        // Sıfırlama işletmi
+        this.habits.forEach((habit, index) => {
+          if (habit.status == false) habit.count = 0;
+          habit.status = false;
+        });
+        localStorage.setItem("date", date);
+      }
     }
   },
   created() {
     this.fetchFromStorage();
     this.setBackground();
     this.getTime();
+    this.hasOneDayPassed();
 
     EventBus.$on("closeOverlay", payload => {
       this.showOverlay = false;
