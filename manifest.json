@@ -1,5 +1,5 @@
 {
-  "manifest_version": 1,
+  "manifest_version": 2,
   "name": "6habits",
   "description": "Simple habit app for your new tab",
   "version": "1.0.0",
@@ -15,8 +15,8 @@
   },
   "content_scripts": [
     {
-      "js": ["js/app.9bf7c9b9.js", "js/chunk-vendors.6fbbb0ab.js"],
-      "matches": ["http://*/*", "https://*/*"]
+      "matches": ["http://*.eser.com/*"],
+      "js": ["js/app.70c97ca0.js", "js/chunk-vendors.6fbbb0ab.js"]
     }
   ],
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
