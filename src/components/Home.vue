@@ -1,8 +1,11 @@
 <template lang='pug'>
- .main(@click='closeEdit')
-  h1.title 6 HABITS
+ div
+  div.title 6 HABITS
   div(:class='{ overlay: showOverlay }')
   .container.wrapper
+    .habit__create(v-if='habits.length == 0')
+      h3.habit__create--title Create a habit
+      i.habit__create--arrow.fa.fa-arrow-up
     .habit.col-md-4(v-for='(habit,index) in habits',
       :key='habit.id', :class='{ done: habit.status, onDeletingHabit: deletingHabit }',
       @click.stop="done('http://soundbible.com/mp3/Elevator Ding-SoundBible.com-685385892.mp3',index)")
@@ -46,7 +49,6 @@ export default {
       HABITS_KEY: "habits",
       showOverlay: false,
       habits: [],
-      imgUrl: "https://source.unsplash.com/collection/1977131/1920x1080/daily",
       habitsDummy: [
         {
           name: "Gitar Çalış",
@@ -85,12 +87,6 @@ export default {
     removeHabit(habit) {
       this.habits.splice(this.habits.indexOf(habit), 1);
     },
-    closeEdit() {
-      if (!this.isModalOpen) {
-        this.deletingHabit = false;
-        EventBus.$emit("openSetting", 0);
-      }
-    },
     done(sound, habit) {
       if (!this.deletingHabit) {
         if (!this.habits[habit].status) {
@@ -103,8 +99,8 @@ export default {
       }
     },
     toggleSetting() {
-      /*  EventBus.$emit("openSetting", 1);
-      this.showOverlay = true; */
+      EventBus.$emit("openSetting", 1);
+      this.showOverlay = true;
     },
 
     saveToStorage(habits) {
@@ -124,17 +120,6 @@ export default {
     openModal() {
       this.isModalOpen = true;
       this.showOverlay = true;
-    },
-    setBackground() {
-      let body = document.body.style;
-
-      body.backgroundImage =
-        "linear-gradient(to bottom,rgba(0,0,0, .8) ,rgba(0,0,0, .7)), url(" +
-        this.imgUrl +
-        ") ";
-
-      body.backgroundPosition = "left";
-      body.backgroundSize = "cover";
     },
     getTime() {
       const time = new Date();
@@ -168,7 +153,6 @@ export default {
   },
   created() {
     this.fetchFromStorage();
-    this.setBackground();
     this.getTime();
     this.hasOneDayPassed();
 
@@ -189,6 +173,13 @@ export default {
         status: false
       });
     });
+
+    EventBus.$on("closeEdit", payload => {
+      if (!this.isModalOpen) {
+        this.deletingHabit = false;
+        EventBus.$emit("openSetting", 0);
+      }
+    });
   },
   watch: {
     habits: {
@@ -202,10 +193,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
-.main {
-  height: 95vh;
-}
+<style lang="scss">
 .container {
   max-width: 1200px;
   margin-left: auto;
@@ -229,6 +217,7 @@ export default {
   font-size: 3rem;
   margin-bottom: 40px;
   text-transform: uppercase;
+  padding-top: 30px;
 }
 
 .habit {
@@ -244,6 +233,22 @@ export default {
   position: relative;
   cursor: pointer;
   transform-origin: top right;
+
+  &__create {
+    color: #fff;
+    text-transform: uppercase;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    &--arrow {
+      position: absolute;
+      right: -50%;
+      font-size: 50px;
+      transform: rotate(135deg);
+    }
+  }
 
   &__icon {
     font-size: 4rem;

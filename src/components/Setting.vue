@@ -35,7 +35,7 @@ export default {
   methods: {
     saveBackgroundColor(color) {
       localStorage.setItem(this.BACKGROUND_KEY, color);
-      document.body.style.backgroundColor = color;
+      EventBus.$emit("changeColor", color);
     },
     closeSetting() {
       this.showSetting = false;
@@ -44,13 +44,13 @@ export default {
   },
   created() {
     EventBus.$on("openSetting", payload => {
-      payload == 1 ? this.showSetting = true : this.closeSetting();
+      payload == 1 ? (this.showSetting = true) : this.closeSetting();
     });
   }
 };
 </script>
 
-<style lang='scss' scoped>
+<style lang='scss'>
 .setting {
   height: 100vh;
   background: #22a6b3;

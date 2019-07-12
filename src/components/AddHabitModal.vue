@@ -71,7 +71,7 @@ export default {
 };
 </script>
 
-<style lang='scss' scoped>
+<style lang='scss'>
 .Modal {
   background-color: #ddd;
   padding: 40px 100px;
